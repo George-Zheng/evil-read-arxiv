@@ -24,14 +24,14 @@ SHELL=/bin/zsh
 PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
 OBSIDIAN_VAULT_PATH=\"/Users/zhengqiaoshi/Documents/Obsidian Vault\"
 
-# 每周一 9:00 - 方向 A：自动驾驶芯片设计 NotebookLM 研究
-0 9 * * 1 cd $REPO_DIR && source .env.local && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction A
+# 每周六 22:00 - 方向 A：自动驾驶芯片设计 NotebookLM 研究
+0 22 * * 6 cd $REPO_DIR && source .env.local && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction A
 
-# 每周二 9:00 - 方向 B：自动驾驶算法演进 顶会论文搜索
-0 9 * * 2 cd $REPO_DIR && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction B
+# 每周日 16:00 - 方向 B：自动驾驶算法演进 顶会论文搜索
+0 16 * * 0 cd $REPO_DIR && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction B
 
-# 每周三 9:00 - 方向 C：高性价比推理芯片 NotebookLM 研究
-0 9 * * 3 cd $REPO_DIR && source .env.local && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction C
+# 每周日 13:00 - 方向 C：高性价比推理芯片 NotebookLM 研究
+0 13 * * 0 cd $REPO_DIR && source .env.local && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction C
 "
 
 # 备份现有 crontab
@@ -49,9 +49,9 @@ echo "✅ 定时任务已安装!"
 echo "=============================================="
 echo ""
 echo "已添加的任务:"
-echo "  - 周一 9:00: 自动驾驶芯片设计 (方向 A)"
-echo "  - 周二 9:00: 自动驾驶算法演进 (方向 B)"
-echo "  - 周三 9:00: 高性价比推理芯片 (方向 C)"
+echo "  - 周六 22:00: 自动驾驶芯片设计 (方向 A)"
+echo "  - 周日 16:00: 自动驾驶算法演进 (方向 B)"
+echo "  - 周日 13:00: 高性价比推理芯片 (方向 C)"
 echo ""
 echo "查看已安装的任务：crontab -l"
 echo "编辑任务：crontab -e"

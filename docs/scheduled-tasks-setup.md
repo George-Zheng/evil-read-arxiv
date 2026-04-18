@@ -6,9 +6,9 @@
 
 | 方向 | 研究主题 | 任务类型 | 频率 | 执行时间 |
 |------|----------|----------|------|----------|
-| **A** | 自动驾驶芯片设计 | NotebookLM 深度研究 | 每周 | 周一 9:00 |
-| **B** | 自动驾驶算法演进 | 顶会论文搜索 | 每周 | 周二 9:00 |
-| **C** | 高性价比推理芯片 | NotebookLM 深度研究 | 每周 | 周三 9:00 |
+| **A** | 自动驾驶芯片设计 | NotebookLM 深度研究 | 每周 | 周六 22:00 |
+| **B** | 自动驾驶算法演进 | 顶会论文搜索 | 每周 | 周日 16:00 |
+| **C** | 高性价比推理芯片 | NotebookLM 深度研究 | 每周 | 周日 13:00 |
 
 ## 配置方式
 
@@ -23,14 +23,14 @@ crontab -e
 添加以下任务：
 
 ```cron
-# 每周一 9:00 - 自动驾驶芯片设计 NotebookLM 研究
-0 9 * * 1 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian && /opt/homebrew/bin/notebooklm status >/dev/null 2>&1 && source .env.local && python3 notebooklm-workflow/scripts/workflow_main.py "autonomous driving chip design" --compare --send-email
+# 每周六 22:00 - 方向 A：自动驾驶芯片设计 NotebookLM 研究
+0 22 * * 6 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian && /opt/homebrew/bin/notebooklm status >/dev/null 2>&1 && source .env.local && python3 notebooklm-workflow/scripts/workflow_main.py "autonomous driving chip design" --compare --send-email
 
-# 每周二 9:00 - 自动驾驶算法顶会论文搜索
-0 9 * * 2 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian/conf-papers && python3 scripts/search_conf_papers.py --config conf-papers-ad-algo.yaml --output conf_papers_ad_filtered.json && cd .. && python3 start-my-day/scripts/generate_conf_recommendation.py
+# 每周日 13:00 - 方向 C：高性价比推理芯片 NotebookLM 研究
+0 13 * * 0 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian && /opt/homebrew/bin/notebooklm status >/dev/null 2>&1 && source .env.local && python3 notebooklm-workflow/scripts/workflow_main.py "cost effective inference chip" --compare --send-email
 
-# 每周三 9:00 - 高性价比推理芯片 NotebookLM 研究
-0 9 * * 3 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian && /opt/homebrew/bin/notebooklm status >/dev/null 2>&1 && source .env.local && python3 notebooklm-workflow/scripts/workflow_main.py "cost effective inference chip" --compare --send-email
+# 每周日 16:00 - 方向 B：自动驾驶算法顶会论文搜索
+0 16 * * 0 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian/conf-papers && python3 scripts/search_conf_papers.py --config conf-papers-ad-algo.yaml --output conf_papers_ad_filtered.json && cd .. && python3 start-my-day/scripts/generate_conf_recommendation.py
 ```
 
 ### 方式 2：使用 macOS Shortcuts（快捷指令）

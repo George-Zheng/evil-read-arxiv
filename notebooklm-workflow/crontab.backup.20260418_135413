@@ -1,0 +1,18 @@
+# NotebookLM Workflow 定时任务
+# 3 个研究方向的自动研究任务
+# 由 /Users/zhengqiaoshi/workspace/notebooklm_obsidian/notebooklm-workflow/docs/scheduled-tasks-setup.md 生成
+
+# 环境变量设置
+SHELL=/bin/zsh
+PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin
+OBSIDIAN_VAULT_PATH="/Users/zhengqiaoshi/Documents/Obsidian Vault"
+
+# 每周一 9:00 - 方向 A：自动驾驶芯片设计 NotebookLM 研究
+0 9 * * 1 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian/notebooklm-workflow && source .env.local && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction A
+
+# 每周二 9:00 - 方向 B：自动驾驶算法演进 顶会论文搜索
+0 9 * * 2 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian/notebooklm-workflow && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction B
+
+# 每周三 9:00 - 方向 C：高性价比推理芯片 NotebookLM 研究
+0 9 * * 3 cd /Users/zhengqiaoshi/workspace/notebooklm_obsidian/notebooklm-workflow && source .env.local && python3 notebooklm-workflow/scripts/scheduled_task_runner.py --direction C
+
