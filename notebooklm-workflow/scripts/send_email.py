@@ -102,7 +102,8 @@ def generate_email_html(
     artifacts: Optional[Dict[str, Any]] = None,
     include_summary: bool = True,
     include_paper_list: bool = True,
-    include_artifacts: bool = True
+    include_artifacts: bool = True,
+    comparison_summary: Optional[str] = None
 ) -> str:
     """
     生成 HTML 邮件正文
@@ -165,6 +166,11 @@ def generate_email_html(
     html += f"""<div class="meta-item"><span class="label">发现来源：</span>{research_result.get('sources_found', 0)} 篇</div>"""
     html += f"""<div class="meta-item"><span class="label">导入来源：</span>{research_result.get('sources_imported', 0)} 篇</div>"""
     html += """</div>"""
+
+    # 报告比较摘要
+    if comparison_summary:
+        html += "<h2>📊 报告比较</h2>"
+        html += f"<div style='background: #f0f7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #4a9eff;'>{comparison_summary.replace(chr(10), '<br>')}</div>"
 
     # 研究摘要
     if include_summary and research_result.get("report"):
@@ -346,6 +352,9 @@ async def send_research_email(
         logger.info("Email sending is disabled")
         return False
 
+    # 从 research_result 中提取比较摘要
+    comparison_summary = research_result.get("comparison_summary")
+
     # 生成邮件内容
     html_content = generate_email_html(
         topic,
@@ -353,7 +362,8 @@ async def send_research_email(
         artifacts,
         include_summary=True,
         include_paper_list=True,
-        include_artifacts=True
+        include_artifacts=True,
+        comparison_summary=comparison_summary
     )
 
     subject = generate_email_subject(

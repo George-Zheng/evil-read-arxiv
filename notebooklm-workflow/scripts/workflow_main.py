@@ -26,6 +26,7 @@ from export_to_obsidian import (
 )
 from send_email import send_research_email, get_email_config
 from workflow_db import WorkflowDatabase, get_default_db_path
+from report_comparator import ReportComparator
 
 # 配置日志
 logging.basicConfig(
@@ -165,6 +166,18 @@ def parse_args():
         help="邮件配置文件路径"
     )
 
+    # 报告比较配置
+    parser.add_argument(
+        "--compare",
+        action="store_true",
+        help="与上一次报告进行比较"
+    )
+    parser.add_argument(
+        "--compare-only",
+        action="store_true",
+        help="只进行比较，不执行研究"
+    )
+
     # 其他配置
     parser.add_argument(
         "--config",
@@ -265,6 +278,7 @@ async def run_workflow(args):
 
             # ========== 3. 导出到 Obsidian ==========
             obsidian_path = None
+            comparison_result = None
             if not args.no_export:
                 logger.info("Step 3: Exporting to Obsidian")
 
@@ -285,17 +299,43 @@ async def run_workflow(args):
                 )
                 logger.info(f"Exported to: {obsidian_path}")
 
+                # ========== 3.5 与上一次报告比较 ==========
+                if args.compare:
+                    logger.info("Step 3.5: Comparing with previous report")
+                    comparator = ReportComparator(db_path)
+
+                    # 获取新报告内容
+                    new_report = artifacts_result.get("artifacts", {}).get("report", {}).get("content", "")
+
+                    # 获取上一次报告并比较
+                    comparison_result = comparator.compare_reports(
+                        new_report=new_report,
+                        old_report=comparator.get_last_report(topic)
+                    )
+
+                    # 生成比较笔记
+                    comparison_note_path = obsidian_path.parent / f"{topic}_comparison_{datetime.now().strftime('%Y%m%d')}.md"
+                    comparator.generate_comparison_note(comparison_result, comparison_note_path)
+                    logger.info(f"Comparison note saved to: {comparison_note_path}")
+
             # ========== 4. 发送邮件 ==========
             if args.send_email:
                 logger.info("Step 4: Sending email")
 
                 email_config = get_email_config()
                 if email_config.get("password"):
+                    # 准备附件（如果有比较笔记）
+                    email_attachments = []
+                    if comparison_result and comparison_result.get("has_comparison"):
+                        # 将比较结果添加到 research_result 中以便在邮件中显示
+                        research_result["comparison_summary"] = comparison_result.get("summary", "")
+
                     success = await send_research_email(
                         topic=topic,
                         research_result=research_result,
                         artifacts=artifacts_result,
-                        config=email_config
+                        config=email_config,
+                        attachments=email_attachments if email_attachments else None
                     )
                     if success:
                         logger.info("Email sent successfully")
@@ -312,13 +352,17 @@ async def run_workflow(args):
                 notebook_id=notebook_id
             )
 
+            # 获取报告内容用于下次比较
+            report_content = artifacts_result.get("artifacts", {}).get("report", {}).get("content", "")
+
             db.add_execution_log(
                 topic=topic,
                 notebook_id=notebook_id,
                 status="success",
                 sources_found=research_result.get("sources_found", 0),
                 sources_imported=research_result.get("sources_imported", 0),
-                artifacts=artifacts_result.get("artifacts", {})
+                artifacts=artifacts_result.get("artifacts", {}),
+                report_content=report_content
             )
 
             # 记录处理的论文
@@ -346,6 +390,12 @@ async def run_workflow(args):
             print(f"Sources imported: {research_result.get('sources_imported', 0)}")
             print(f"Export path: {obsidian_path}")
             print(f"Database: {db_path}")
+
+            # 显示比较结果
+            if comparison_result and comparison_result.get("has_comparison"):
+                print("\n--- Report Comparison ---")
+                print(comparison_result.get("summary", ""))
+
             print("=" * 50)
 
             return {

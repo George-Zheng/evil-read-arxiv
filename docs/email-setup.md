@@ -191,6 +191,10 @@ export EMAIL_SENDER="your-email@yourcompany.com"
 - `.gitignore` - Git 忽略规则
 - `notebooklm-workflow/scripts/send_email.py` - 邮件发送脚本
 
+## 另请参阅
+
+- [报告比较功能](report-comparison.md) - 比较连续生成的报告，高亮显示变化和重复内容
+
 ---
 
 *最后更新：2026-04-18*

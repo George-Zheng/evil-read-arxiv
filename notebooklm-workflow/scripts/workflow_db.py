@@ -213,11 +213,19 @@ class WorkflowDatabase:
         sources_found: int = 0,
         sources_imported: int = 0,
         artifacts: Optional[Dict[str, Any]] = None,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
+        report_content: Optional[str] = None
     ):
         """添加执行日志"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
+
+        # 如果有报告内容，添加到 artifacts 中
+        artifacts_data = artifacts
+        if report_content and artifacts_data:
+            if "report" not in artifacts_data:
+                artifacts_data["report"] = {}
+            artifacts_data["report"]["content"] = report_content
 
         cursor.execute("""
             INSERT INTO execution_logs
@@ -228,7 +236,7 @@ class WorkflowDatabase:
             topic, notebook_id, datetime.now().isoformat(),
             datetime.now().isoformat(), status,
             sources_found, sources_imported,
-            json.dumps(artifacts) if artifacts else None,
+            json.dumps(artifacts_data) if artifacts_data else None,
             error_message
         ))
 
