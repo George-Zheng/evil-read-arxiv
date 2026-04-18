@@ -569,8 +569,16 @@ def filter_and_score_papers(papers: List[Dict], cp_config: Dict, top_n: int = 10
         paper['categories'] = venue_categories
 
         # 用 abstract 替代 summary（兼容 calculate_relevance_score）
+        # 确保 paper 有 abstract 或 summary 字段
+        if not paper.get('abstract') and not paper.get('summary'):
+            # 如果没有摘要，跳过这篇论文
+            logger.debug(f"Skipping paper {paper.get('title', 'Untitled')}: no abstract")
+            continue
+
         if paper.get('abstract') and not paper.get('summary'):
             paper['summary'] = paper['abstract']
+        elif paper.get('summary') and not paper.get('abstract'):
+            paper['abstract'] = paper['summary']
 
         # 计算相关性
         relevance, matched_domain, matched_keywords = calculate_relevance_score(

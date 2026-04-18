@@ -1,0 +1,15 @@
+{
+  "year": 2025,
+  "conferences_searched": [
+    "CVPR",
+    "ICCV",
+    "ECCV",
+    "ICLR",
+    "NeurIPS",
+    "ICML"
+  ],
+  "total_found": 3907,
+  "total_filtered": 785,
+  "total_enriched": 0,
+  "top_papers": []
+}
