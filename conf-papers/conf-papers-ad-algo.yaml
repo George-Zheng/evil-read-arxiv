@@ -1,0 +1,81 @@
+# conf-papers skill 专用配置 - 自动驾驶算法方向
+# 用于定时任务：每周搜索自动驾驶算法相关顶会论文
+
+# 感兴趣的关键词（用于从顶会论文中筛选）
+keywords:
+  # 感知方向
+  - "autonomous driving"
+  - "perception"
+  - "3D object detection"
+  - "BEV"
+  - "bird's-eye view"
+  - "occupancy network"
+  - "semantic segmentation"
+  - "instance segmentation"
+  - "panoptic segmentation"
+  - "depth estimation"
+  - "lidar"
+  - "camera"
+  - "radar"
+  - "sensor fusion"
+  - "multimodal fusion"
+
+  # 决策规划方向
+  - "motion planning"
+  - "trajectory prediction"
+  - "behavior prediction"
+  - "decision making"
+  - "reinforcement learning driving"
+  - "imitation learning"
+
+  # 端到端和世界模型
+  - "end-to-end driving"
+  - "world model"
+  - "driving world model"
+  - "VLA"
+  - "vision-language-action"
+  - "transformer"
+  - "attention mechanism"
+
+  # 大模型应用
+  - "large language model"
+  - "LLM"
+  - "foundation model"
+  - "multimodal large language model"
+  - "MLLM"
+  - "VLM"
+  - "vision-language model"
+
+# 排除的关键词
+excluded_keywords:
+  - "3D reconstruction"
+  - "3D rendering"
+  - "review"
+  - "workshop"
+  - "survey"
+  - "tutorial"
+  - "medical"
+  - "robotics arm"
+  - "grasping"
+
+# 默认搜索年份（命令行参数可覆盖）
+default_year: 2025
+
+# 默认搜索的会议 - 专注于 AI 算法和视觉相关顶会
+# 主要会议：CVPR, ICCV, ECCV (视觉); ICLR, NeurIPS, ICML (AI/ML); ICRA, IROS, CoRL (机器人/自动驾驶)
+default_conferences:
+  # 计算机视觉三大顶会
+  - "CVPR"
+  - "ICCV"
+  - "ECCV"
+  # AI/ML 顶会
+  - "ICLR"
+  - "NeurIPS"
+  - "ICML"
+  # 机器人和自动驾驶顶会
+  - "ICRA"
+  - "IROS"
+  - "CoRL"
+
+# 返回的论文数量
+top_n: 10

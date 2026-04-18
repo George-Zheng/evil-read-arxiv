@@ -1,0 +1,107 @@
+# NotebookLM Workflow 研究主题配置
+# 用于定时任务自动执行
+
+research_topics:
+  # ========== 方向 A：自动驾驶芯片设计 ==========
+  "autonomous-driving-chip":
+    display_name: "自动驾驶芯片设计"
+    description: "自动驾驶芯片设计方案，包括性能提升、能效优化、可靠性保障策略"
+    keywords:
+      - "autonomous driving chip"
+      - "self-driving chip"
+      - "ADAS processor"
+      - "automotive AI chip"
+      - "neural network accelerator"
+      - "deep learning processor"
+      - "edge AI inference"
+      - "ISO 26262"
+      - "functional safety"
+      - "automotive grade"
+      - "low power inference"
+      - "energy efficient AI"
+      - "chiplet architecture"
+      - "heterogeneous computing"
+      - "NPU"
+      - "TPU"
+    notebook_prefix: "AD-Chip"
+    enabled: true
+    schedule: "weekly"
+
+  # ========== 方向 B：自动驾驶算法 ==========
+  "autonomous-driving-algorithms":
+    display_name: "自动驾驶算法演进"
+    description: "自动驾驶算法进展，包括感知、决策、规控、VLA、世界模型等"
+    keywords:
+      - "autonomous driving perception"
+      - "3D object detection"
+      - "BEV perception"
+      - "occupancy network"
+      - "motion planning"
+      - "trajectory prediction"
+      - "decision making"
+      - "end-to-end driving"
+      - "vision-language-action"
+      - "VLA model"
+      - "world model"
+      - "driving world model"
+      - "multimodal fusion"
+      - "sensor fusion"
+      - "lidar camera radar"
+      - "transformer autonomous driving"
+    notebook_prefix: "AD-Algo"
+    enabled: true
+    schedule: "weekly"
+
+  # ========== 方向 C：高性价比推理芯片 ==========
+  "cost-effective-inference-chip":
+    display_name: "高性价比推理芯片"
+    description: "高性价比推理芯片设计，包括架构优化、低精度计算、数据压缩、带宽优化、硬化算子等"
+    keywords:
+      - "inference accelerator"
+      - "low cost AI chip"
+      - "edge inference"
+      - "quantization"
+      - "low precision"
+      - "INT8"
+      - "FP8"
+      - "4-bit"
+      - "weight compression"
+      - "activation compression"
+      - "memory bandwidth optimization"
+      - "model compression"
+      - "pruning"
+      - "sparsity"
+      - "hardware operator"
+      - "fixed-function accelerator"
+      - "dataflow optimization"
+      - "systolic array"
+      - "near-memory computing"
+      - "processing-in-memory"
+      - "PIM"
+    notebook_prefix: "Inference-Chip"
+    enabled: true
+    schedule: "weekly"
+
+# 全局配置
+global:
+  # NotebookLM 配置
+  notebook_rotation: "quarterly"
+  deep_research_mode: "deep"
+  max_sources: 20
+  research_timeout: 600
+  artifact_timeout: 600
+
+  # 生成内容
+  generate_artifacts:
+    slide_deck: true
+    audio: true
+    report: true
+
+  # Obsidian 导出
+  export_folder: "NotebookLM/Exports"
+
+  # 邮件配置
+  send_email: false  # 如需开启，设置 EMAIL_PASSWORD 环境变量
+
+  # 数据库
+  db_path: "~/.notebooklm/workflow.db"
