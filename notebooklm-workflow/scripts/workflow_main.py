@@ -278,6 +278,7 @@ async def run_workflow(args):
 
             # ========== 3. 导出到 Obsidian ==========
             obsidian_path = None
+            comparison_note_path = None
             comparison_result = None
             if not args.no_export:
                 logger.info("Step 3: Exporting to Obsidian")
@@ -285,7 +286,7 @@ async def run_workflow(args):
                 # 创建导出文件夹
                 exports_dir = create_exports_folder(vault_path, args.export_folder)
 
-                # 生成笔记内容
+                # 生成完整笔记内容
                 note_content = generate_note_content(
                     topic=topic,
                     research_result=research_result,
@@ -293,11 +294,11 @@ async def run_workflow(args):
                     language="zh"  # 从配置读取
                 )
 
-                # 导出
+                # 导出完整报告
                 obsidian_path = export_to_obsidian(
                     note_content, vault_path, topic, args.export_folder
                 )
-                logger.info(f"Exported to: {obsidian_path}")
+                logger.info(f"Exported full report to: {obsidian_path}")
 
                 # ========== 3.5 与上一次报告比较 ==========
                 if args.compare:
@@ -313,10 +314,20 @@ async def run_workflow(args):
                         old_report=comparator.get_last_report(topic)
                     )
 
-                    # 生成比较笔记
-                    comparison_note_path = obsidian_path.parent / f"{topic}_comparison_{datetime.now().strftime('%Y%m%d')}.md"
-                    comparator.generate_comparison_note(comparison_result, comparison_note_path)
-                    logger.info(f"Comparison note saved to: {comparison_note_path}")
+                    # 生成比较报告内容
+                    from export_to_obsidian import generate_comparison_note_content
+                    comparison_content = generate_comparison_note_content(
+                        topic=topic,
+                        comparison_result=comparison_result,
+                        language="zh"
+                    )
+
+                    # 导出比较报告（使用不同的文件夹）
+                    comparison_folder = f"{args.export_folder}/Comparisons"
+                    comparison_note_path = export_to_obsidian(
+                        comparison_content, vault_path, f"{topic}_comparison", comparison_folder
+                    )
+                    logger.info(f"Exported comparison report to: {comparison_note_path}")
 
             # ========== 4. 发送邮件 ==========
             if args.send_email:
@@ -324,23 +335,37 @@ async def run_workflow(args):
 
                 email_config = get_email_config()
                 if email_config.get("password"):
-                    # 准备附件（如果有比较笔记）
-                    email_attachments = []
-                    if comparison_result and comparison_result.get("has_comparison"):
-                        # 将比较结果添加到 research_result 中以便在邮件中显示
-                        research_result["comparison_summary"] = comparison_result.get("summary", "")
-
-                    success = await send_research_email(
+                    # 发送完整报告邮件
+                    logger.info("Sending full report email...")
+                    success_full = await send_research_email(
                         topic=topic,
                         research_result=research_result,
                         artifacts=artifacts_result,
                         config=email_config,
-                        attachments=email_attachments if email_attachments else None
+                        email_type="full"
                     )
-                    if success:
-                        logger.info("Email sent successfully")
+                    if success_full:
+                        logger.info("Full report email sent successfully")
                     else:
-                        logger.warning("Failed to send email")
+                        logger.warning("Failed to send full report email")
+
+                    # 发送比较报告邮件（如果有比较结果）
+                    if comparison_result and comparison_result.get("has_comparison"):
+                        logger.info("Sending comparison report email...")
+                        success_comparison = await send_research_email(
+                            topic=topic,
+                            research_result=research_result,
+                            artifacts=artifacts_result,
+                            config=email_config,
+                            comparison_result=comparison_result,
+                            email_type="comparison"
+                        )
+                        if success_comparison:
+                            logger.info("Comparison report email sent successfully")
+                        else:
+                            logger.warning("Failed to send comparison report email")
+                    else:
+                        logger.info("No comparison available, skipping comparison email")
                 else:
                     logger.warning("Email password not configured, skipping")
 
@@ -388,7 +413,9 @@ async def run_workflow(args):
             print(f"Notebook: {notebook_title} ({notebook_id})")
             print(f"Sources found: {research_result.get('sources_found', 0)}")
             print(f"Sources imported: {research_result.get('sources_imported', 0)}")
-            print(f"Export path: {obsidian_path}")
+            print(f"Full report: {obsidian_path}")
+            if comparison_note_path:
+                print(f"Comparison report: {comparison_note_path}")
             print(f"Database: {db_path}")
 
             # 显示比较结果

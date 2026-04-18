@@ -330,7 +330,9 @@ async def send_research_email(
     research_result: Dict[str, Any],
     artifacts: Optional[Dict[str, Any]] = None,
     config: Optional[Dict[str, Any]] = None,
-    attachments: Optional[List[Path]] = None
+    attachments: Optional[List[Path]] = None,
+    comparison_result: Optional[Dict[str, Any]] = None,
+    email_type: str = "full"
 ) -> bool:
     """
     发送研究报告邮件
@@ -341,6 +343,8 @@ async def send_research_email(
         artifacts: Artifact 结果
         config: 邮件配置
         attachments: 附件列表
+        comparison_result: 比较结果（仅用于 comparison 类型）
+        email_type: 邮件类型 ("full" 或 "comparison")
 
     Returns:
         是否发送成功
@@ -352,27 +356,177 @@ async def send_research_email(
         logger.info("Email sending is disabled")
         return False
 
-    # 从 research_result 中提取比较摘要
-    comparison_summary = research_result.get("comparison_summary")
-
-    # 生成邮件内容
-    html_content = generate_email_html(
-        topic,
-        research_result,
-        artifacts,
-        include_summary=True,
-        include_paper_list=True,
-        include_artifacts=True,
-        comparison_summary=comparison_summary
-    )
-
-    subject = generate_email_subject(
-        topic,
-        email_config.get("subject_template")
-    )
+    # 根据邮件类型生成不同的内容
+    if email_type == "comparison":
+        if not comparison_result:
+            logger.warning("Comparison result required for comparison email")
+            return False
+        html_content = generate_comparison_email_html(
+            topic=topic,
+            comparison_result=comparison_result,
+            research_result=research_result
+        )
+        subject = f"[NotebookLM 报告比较] {topic} - {datetime.now().strftime('%Y-%m-%d')}"
+    else:  # full
+        html_content = generate_email_html(
+            topic,
+            research_result,
+            artifacts,
+            include_summary=True,
+            include_paper_list=True,
+            include_artifacts=True,
+            comparison_summary=None
+        )
+        subject = f"[NotebookLM 研究报告] {topic} - {datetime.now().strftime('%Y-%m-%d')}"
 
     # 发送邮件
     return send_email(subject, html_content, email_config, attachments)
+
+
+def generate_comparison_email_html(
+    topic: str,
+    comparison_result: Dict[str, Any],
+    research_result: Optional[Dict[str, Any]] = None
+) -> str:
+    """
+    生成比较报告的 HTML 邮件正文
+
+    Args:
+        topic: 研究主题
+        comparison_result: 比较结果
+        research_result: 研究结果（用于获取基本信息）
+
+    Returns:
+        HTML 内容
+    """
+    # 基础样式
+    style = """
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #1a1a1a; border-bottom: 2px solid #4a9eff; padding-bottom: 10px; }
+        h2 { color: #4a9eff; margin-top: 30px; }
+        .meta { background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .meta-item { margin: 8px 0; }
+        .label { font-weight: 600; color: #666; }
+        .summary-box { background: #f0f7ff; padding: 20px; border-radius: 8px; border-left: 4px solid #4a9eff; margin: 20px 0; }
+        .section { margin: 25px 0; }
+        .item { padding: 10px; margin: 8px 0; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #ddd; }
+        .item-new { border-left-color: #28a745; background: #e8f5e9; }
+        .item-modified { border-left-color: #ffc107; background: #fff8e1; }
+        .item-duplicate { border-left-color: #6c757d; background: #f8f9fa; }
+        .item-deleted { border-left-color: #dc3545; background: #fce8e6; }
+        .similarity { font-size: 12px; color: #666; font-style: italic; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px; }
+        a { color: #4a9eff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .stat-box { display: inline-block; padding: 10px 20px; margin: 5px; background: #e9ecef; border-radius: 8px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #4a9eff; }
+        .stat-label { font-size: 12px; color: #666; }
+    </style>
+    """
+
+    # 开始构建 HTML
+    html = f"""<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        {style}
+    </head>
+    <body>
+    """
+
+    # 标题
+    html += f"<h1>📊 报告比较：{topic}</h1>"
+    html += f"<p><strong>生成时间：</strong>{datetime.now().strftime('%Y-%m-%d %H:%M')}</p>"
+
+    # 检查是否有比较结果
+    if not comparison_result.get("has_comparison"):
+        html += """<div class="summary-box">
+        <p>⚠️ <strong>没有找到上一次的报告</strong></p>
+        <p>这是该主题的首次报告，没有可比较的内容。</p>
+        </div>"""
+        html += """<div class="footer">
+        <p>此邮件由 notebooklm-workflow 自动生成</p>
+        </div></body></html>"""
+        return html
+
+    # 统计信息
+    comparison_data = comparison_result.get("comparison", {})
+    total_new = comparison_data.get("total_new", 0)
+    new_count = len(comparison_data.get("new", []))
+    deleted_count = len(comparison_data.get("deleted", []))
+    modified_count = len(comparison_data.get("modified", []))
+    duplicate_count = len(comparison_data.get("duplicate", []))
+
+    html += """<div class="meta">"""
+    html += f"""<div class="stat-box"><div class="stat-value">{new_count}</div><div class="stat-label">新增</div></div>"""
+    html += f"""<div class="stat-box"><div class="stat-value">{modified_count}</div><div class="stat-label">修改</div></div>"""
+    html += f"""<div class="stat-box"><div class="stat-value">{duplicate_count}</div><div class="stat-label">重复</div></div>"""
+    html += f"""<div class="stat-box"><div class="stat-value">{deleted_count}</div><div class="stat-label">删除</div></div>"""
+    html += """</div>"""
+
+    # 比较摘要
+    summary = comparison_result.get("summary", "")
+    html += f"""<div class="summary-box">{summary.replace(chr(10), '<br>')}</div>"""
+
+    # 计算变化比例
+    if total_new > 0:
+        change_ratio = (new_count + modified_count) / total_new * 100
+        html += f"""<p style="text-align: center; font-size: 16px; font-weight: bold;">
+        内容变化比例：<span style="color: #4a9eff;">{change_ratio:.1f}%</span>
+        </p>"""
+
+    # 新增内容
+    if comparison_data.get("new"):
+        html += """<div class="section"><h2>➕ 新增内容</h2>"""
+        for i, item in enumerate(comparison_data["new"][:10], 1):  # 最多显示 10 条
+            html += f"""<div class="item item-new">{i}. {item['content']}</div>"""
+        if len(comparison_data["new"]) > 10:
+            html += f"""<p style="text-align: center; color: #666;">还有 {len(comparison_data['new']) - 10} 条新增内容...</p>"""
+        html += """</div>"""
+
+    # 修改内容
+    if comparison_data.get("modified"):
+        html += """<div class="section"><h2>✏️ 修改内容</h2>"""
+        for i, item in enumerate(comparison_data["modified"][:10], 1):  # 最多显示 10 条
+            html += f"""<div class="item item-modified">
+            <strong>{i}. 相似度 {item['similarity']:.0%}</strong><br>
+            <span style="color: #28a745;">新：</span>{item['new_content']}<br>
+            <span style="color: #dc3545;">旧：</span>{item['old_content']}
+            </div>"""
+        if len(comparison_data["modified"]) > 10:
+            html += f"""<p style="text-align: center; color: #666;">还有 {len(comparison_data['modified']) - 10} 条修改内容...</p>"""
+        html += """</div>"""
+
+    # 重复内容
+    if comparison_data.get("duplicate"):
+        html += """<div class="section"><h2>📋 重复内容</h2>"""
+        html += f"""<p>共 {len(comparison_data['duplicate'])} 段内容与上一次报告基本相同：</p>"""
+        for i, item in enumerate(comparison_data["duplicate"][:5], 1):  # 最多显示 5 条
+            html += f"""<div class="item item-duplicate">{i}. {item['content']} <span class="similarity">相似度：{item['similarity']:.0%}</span></div>"""
+        if len(comparison_data["duplicate"]) > 5:
+            html += f"""<p style="text-align: center; color: #666;">还有 {len(comparison_data['duplicate']) - 5} 条重复内容...</p>"""
+        html += """</div>"""
+
+    # 删除内容
+    if comparison_data.get("deleted"):
+        html += """<div class="section"><h2>➖ 删除内容</h2>"""
+        html += f"""<p>共 {len(comparison_data['deleted'])} 段内容在上一次报告中存在，本次已删除：</p>"""
+        for i, item in enumerate(comparison_data["deleted"][:5], 1):  # 最多显示 5 条
+            html += f"""<div class="item item-deleted">{i}. {item['content']}</div>"""
+        if len(comparison_data["deleted"]) > 5:
+            html += f"""<p style="text-align: center; color: #666;">还有 {len(comparison_data['deleted']) - 5} 条删除内容...</p>"""
+        html += """</div>"""
+
+    # 脚注
+    html += """<div class="footer">
+    <p>此邮件由 notebooklm-workflow 自动生成 | 报告比较功能</p>
+    <p>查看完整比较报告请在 Obsidian 中打开</p>
+    </div>"""
+
+    html += """</body></html>"""
+
+    return html
 
 
 async def main():

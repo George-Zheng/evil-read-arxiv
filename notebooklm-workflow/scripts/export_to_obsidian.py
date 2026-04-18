@@ -168,6 +168,204 @@ def _generate_chinese_body(
     return "\n".join(lines)
 
 
+def generate_comparison_note_content(
+    topic: str,
+    comparison_result: Dict[str, Any],
+    language: str = "zh"
+) -> str:
+    """
+    生成比较报告的 Obsidian 笔记内容
+
+    Args:
+        topic: 研究主题
+        comparison_result: 比较结果
+        language: 语言 (zh/en)
+
+    Returns:
+        Markdown 内容
+    """
+    now = datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+
+    # 生成 frontmatter
+    tags = ["notebooklm", "research", "comparison", topic.replace(" ", "-").lower()]
+    tags_yaml = "\n".join(f"  - {tag}" for tag in tags)
+
+    frontmatter = f'''---
+created: "{date_str}"
+source: NotebookLM
+topic: "{topic}"
+type: report-comparison
+tags:
+{tags_yaml}
+---
+
+'''
+
+    # 生成正文
+    if language == "zh":
+        body = _generate_comparison_chinese_body(topic, comparison_result)
+    else:
+        body = _generate_comparison_english_body(topic, comparison_result)
+
+    return frontmatter + body
+
+
+def _generate_comparison_chinese_body(
+    topic: str,
+    comparison_result: Dict[str, Any]
+) -> str:
+    """生成中文比较报告正文"""
+    lines = []
+
+    # 标题
+    lines.append(f"# 报告比较：{topic}\n")
+    lines.append(f"*生成时间：{datetime.now().strftime('%Y-%m-%d %H:%M')}*\n")
+
+    # 比较摘要
+    if not comparison_result.get("has_comparison"):
+        lines.append("> ⚠️ 没有找到上一次的报告，无法进行比较")
+        return "\n".join(lines)
+
+    lines.append("## 📊 比较摘要\n")
+
+    comparison_data = comparison_result.get("comparison", {})
+    summary = comparison_result.get("summary", "")
+
+    lines.append(summary)
+    lines.append("")
+
+    # 计算变化比例
+    total_new = comparison_data.get("total_new", 0)
+    new_count = len(comparison_data.get("new", []))
+    modified_count = len(comparison_data.get("modified", []))
+
+    if total_new > 0:
+        change_ratio = (new_count + modified_count) / total_new * 100
+        lines.append(f"**内容变化比例：{change_ratio:.1f}%**\n")
+
+    # 详细内容
+    if comparison_data.get("duplicate"):
+        lines.append("## 📋 重复内容")
+        lines.append("")
+        lines.append(f"共 {len(comparison_data['duplicate'])} 段内容与上一次报告基本相同：")
+        lines.append("")
+        for i, item in enumerate(comparison_data["duplicate"], 1):
+            lines.append(f"{i}. {item['content']}")
+            lines.append(f"   *相似度：{item['similarity']:.0%}*")
+            lines.append("")
+
+    if comparison_data.get("modified"):
+        lines.append("## ✏️ 修改内容")
+        lines.append("")
+        lines.append(f"共 {len(comparison_data['modified'])} 段内容相比上一次有修改：")
+        lines.append("")
+        for i, item in enumerate(comparison_data["modified"], 1):
+            lines.append(f"{i}. **相似度 {item['similarity']:.0%}**")
+            lines.append(f"   - 新：{item['new_content']}")
+            lines.append(f"   - 旧：{item['old_content']}")
+            lines.append("")
+
+    if comparison_data.get("new"):
+        lines.append("## ➕ 新增内容")
+        lines.append("")
+        lines.append(f"共 {len(comparison_data['new'])} 段新增内容：")
+        lines.append("")
+        for i, item in enumerate(comparison_data["new"], 1):
+            lines.append(f"{i}. {item['content']}")
+            lines.append("")
+
+    if comparison_data.get("deleted"):
+        lines.append("## ➖ 删除内容")
+        lines.append("")
+        lines.append(f"共 {len(comparison_data['deleted'])} 段内容在上一次报告中存在，本次已删除：")
+        lines.append("")
+        for i, item in enumerate(comparison_data["deleted"], 1):
+            lines.append(f"{i}. {item['content']}")
+            lines.append("")
+
+    # 脚注
+    lines.append("---")
+    lines.append(f"*此比较报告由 notebooklm-workflow 自动生成于 {datetime.now().strftime('%Y-%m-%d %H:%M')}*")
+
+    return "\n".join(lines)
+
+
+def _generate_comparison_english_body(
+    topic: str,
+    comparison_result: Dict[str, Any]
+) -> str:
+    """生成英文比较报告正文"""
+    lines = []
+
+    lines.append(f"# Report Comparison: {topic}\n")
+    lines.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n")
+
+    if not comparison_result.get("has_comparison"):
+        lines.append("> ⚠️ No previous report found for comparison")
+        return "\n".join(lines)
+
+    lines.append("## 📊 Comparison Summary\n")
+
+    comparison_data = comparison_result.get("comparison", {})
+    summary = comparison_result.get("summary", "")
+
+    lines.append(summary)
+    lines.append("")
+
+    total_new = comparison_data.get("total_new", 0)
+    new_count = len(comparison_data.get("new", []))
+    modified_count = len(comparison_data.get("modified", []))
+
+    if total_new > 0:
+        change_ratio = (new_count + modified_count) / total_new * 100
+        lines.append(f"**Change Ratio: {change_ratio:.1f}%**\n")
+
+    if comparison_data.get("duplicate"):
+        lines.append("## 📋 Duplicate Content")
+        lines.append("")
+        lines.append(f"Total {len(comparison_data['duplicate'])} paragraphs are similar to previous report:")
+        lines.append("")
+        for i, item in enumerate(comparison_data["duplicate"], 1):
+            lines.append(f"{i}. {item['content']}")
+            lines.append(f"   *Similarity: {item['similarity']:.0%}*")
+            lines.append("")
+
+    if comparison_data.get("modified"):
+        lines.append("## ✏️ Modified Content")
+        lines.append("")
+        lines.append(f"Total {len(comparison_data['modified'])} paragraphs have been modified:")
+        lines.append("")
+        for i, item in enumerate(comparison_data["modified"], 1):
+            lines.append(f"{i}. **Similarity {item['similarity']:.0%}**")
+            lines.append(f"   - New: {item['new_content']}")
+            lines.append(f"   - Old: {item['old_content']}")
+            lines.append("")
+
+    if comparison_data.get("new"):
+        lines.append("## ➕ New Content")
+        lines.append("")
+        lines.append(f"Total {len(comparison_data['new'])} new paragraphs:")
+        lines.append("")
+        for i, item in enumerate(comparison_data["new"], 1):
+            lines.append(f"{i}. {item['content']}")
+            lines.append("")
+
+    if comparison_data.get("deleted"):
+        lines.append("## ➖ Deleted Content")
+        lines.append("")
+        lines.append(f"Total {len(comparison_data['deleted'])} paragraphs were removed:")
+        lines.append("")
+        for i, item in enumerate(comparison_data["deleted"], 1):
+            lines.append(f"{i}. {item['content']}")
+            lines.append("")
+
+    lines.append("---")
+    lines.append(f"*Automatically generated by notebooklm-workflow at {datetime.now().strftime('%Y-%m-%d %H:%M')}*")
+
+    return "\n".join(lines)
+
+
 def _generate_english_body(
     topic: str,
     research_result: Dict[str, Any],
