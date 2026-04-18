@@ -213,3 +213,68 @@ excluded_keywords:
 # extra_common_words:
 #   - "dataset"
 #   - "results"
+
+# ========== NotebookLM Workflow Configuration ==========
+# 用于 notebooklm-workflow skill 的配置
+
+notebooklm:
+  enabled: true
+  auth_method: "storage_state"
+  storage_path: "~/.notebooklm/storage_state.json"
+
+  # Notebook 命名和轮换
+  notebook_naming: "{topic}-{year}-{quarter}"
+  rotation: "quarterly"
+
+  # Deep Research 配置
+  deep_research:
+    mode: "deep"          # deep 或 fast
+    timeout: 600          # 等待超时（秒）
+    max_sources: 20       # 最大来源数量
+    auto_import: true     # 自动导入发现的来源
+
+  # 生成内容配置
+  generate:
+    slide_deck:
+      enabled: true
+      format: "pdf"       # pdf 或 pptx
+      template: "detailed"
+    audio:
+      enabled: true
+      format: "mp3"
+      language: "en"      # 音频语言
+    report:
+      enabled: true
+      format: "briefing-doc"  # briefing-doc 或 study-guide
+
+  # Obsidian 导出配置
+  obsidian:
+    vault_path: "${vault_path}"  # 与上方 vault_path 相同
+    folder: "NotebookLM/Exports"
+    include_sources: true
+    include_slides: true
+    include_audio: true
+
+# 邮件配置（可选）
+# 敏感信息（邮箱地址、密码）请通过环境变量设置，不要在此文件中明文存储
+# 复制 .env.example 为 .env.local 并填写你的配置
+email:
+  enabled: false  # 默认关闭，需要时开启
+
+  # 以下配置可通过环境变量覆盖：
+  # EMAIL_SENDER, EMAIL_RECIPIENTS, EMAIL_USERNAME, EMAIL_PASSWORD
+  # EMAIL_SMTP_SERVER, EMAIL_SMTP_PORT, EMAIL_USE_SSL
+
+  smtp_server: "smtp.qq.com"  # 或从 EMAIL_SMTP_SERVER 读取
+  smtp_port: 587              # 或从 EMAIL_SMTP_PORT 读取
+  use_ssl: true               # 或从 EMAIL_USE_SSL 读取
+
+  # 邮件模板
+  subject_template: "[NotebookLM Research] {topic} - {date}"
+  send_on_completion: true
+  attach_pdf: false
+
+  # 邮件内容选项
+  include_summary: true       # 包含研究摘要
+  include_paper_list: true    # 包含论文列表
+  include_artifacts: true     # 包含生成的内容状态

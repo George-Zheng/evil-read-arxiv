@@ -15,6 +15,7 @@
 
 | 日期 | 版本 | 更新内容 |
 |------|------|----------|
+| 2026-04-18 | v1.2 | 新增 `notebooklm-workflow` 技能：集成 NotebookLM Deep Research、生成 Slide/Audio/Report、Obsidian 导出、QQ 邮箱邮件报告 |
 | 2026-03-13 | v1.1 | 新增 `conf-papers` 技能：支持搜索 CVPR/ICCV/ECCV/ICLR/AAAI/NeurIPS/ICML 等顶级会议论文，基于 DBLP + Semantic Scholar 双数据源，独立配置文件，三维评分推荐 |
 | 2026-03-01 | v1.0 | 初始版本：start-my-day 每日推荐、paper-analyze 论文分析、extract-paper-images 图片提取、paper-search 论文搜索 |
 
@@ -59,6 +60,15 @@
 - 两阶段过滤：标题关键词轻量筛选 → S2 补充 → 三维评分（相关性 40% + 热门度 40% + 质量 20%）
 - 前三篇论文自动生成详细分析（需有 arXiv ID）
 
+### 6. notebooklm-workflow - NotebookLM 集成工作流（新增）
+- **Deep Research**: 使用 NotebookLM 研究功能自动发现和整理论文
+- **内容生成**: 生成 Slide Deck、Audio Overview、Report
+- **Obsidian 导出**: 自动生成 Markdown 笔记并保存到 Vault
+- **邮件报告**: 通过 QQ 邮箱发送 HTML 格式的研究摘要
+- **论文追踪**: SQLite 数据库记录已处理的论文
+- 支持手动触发和定时运行
+- 支持多个研究主题配置
+
 ## 安装
 
 ### 前置要求
@@ -79,17 +89,26 @@
    Copy-Item -Recurse evil-read-arxiv\paper-analyze $env:USERPROFILE\.claude\skills\
    Copy-Item -Recurse evil-read-arxiv\extract-paper-images $env:USERPROFILE\.claude\skills\
    Copy-Item -Recurse evil-read-arxiv\paper-search $env:USERPROFILE\.claude\skills\
+   Copy-Item -Recurse evil-read-arxiv\conf-papers $env:USERPROFILE\.claude\skills\
+   Copy-Item -Recurse evil-read-arxiv\notebooklm-workflow $env:USERPROFILE\.claude\skills\
 
    # macOS/Linux
    cp -r evil-read-arxiv/start-my-day ~/.claude/skills/
    cp -r evil-read-arxiv/paper-analyze ~/.claude/skills/
    cp -r evil-read-arxiv/extract-paper-images ~/.claude/skills/
    cp -r evil-read-arxiv/paper-search ~/.claude/skills/
+   cp -r evil-read-arxiv/conf-papers ~/.claude/skills/
+   cp -r evil-read-arxiv/notebooklm-workflow ~/.claude/skills/
    ```
 
-2. 配置环境变量和路径（见下文"配置"部分）
+2. 安装 notebooklm-workflow 的额外依赖：
+   ```bash
+   pip install notebooklm-py
+   ```
 
-3. 重启 Claude Code CLI
+3. 配置环境变量和路径（见下文"配置"部分）
+
+4. 重启 Claude Code CLI
 
 ## 配置
 
@@ -111,6 +130,19 @@ export OBSIDIAN_VAULT_PATH="/Users/yourname/Documents/Obsidian Vault"
 ```
 
 设置环境变量后，**无需修改任何脚本中的路径**。
+
+### 步骤 2：配置邮件（notebooklm-workflow 可选）
+
+如果你需要使用邮件报告功能，请参考 [邮件配置指南](docs/email-setup.md) 设置环境变量。
+
+**快速开始**：
+```bash
+cp .env.example .env.local
+# 编辑 .env.local 填写你的邮箱和授权码
+source .env.local
+```
+
+> **安全提示**：邮箱地址和密码等敏感信息通过环境变量管理，不会提交到 Git。
 
 ### 步骤2：创建配置文件
 
@@ -226,6 +258,32 @@ extract-paper-images 2602.12345
 ```bash
 paper-search "关键词"
 ```
+
+### 6. notebooklm-workflow - NotebookLM 集成工作流
+
+运行自定义主题研究：
+```bash
+notebooklm-workflow "low cost inference chip design"
+```
+
+使用预配置主题：
+```bash
+notebooklm-workflow --topic "AI-Chip"
+```
+
+发送邮件报告：
+```bash
+notebooklm-workflow "embodied AI chip" --send-email
+```
+
+这会：
+1. 使用 NotebookLM Deep Research 搜索和整理论文
+2. 生成 Slide Deck、Audio Overview、Report
+3. 自动生成 Markdown 笔记并保存到 Obsidian
+4. （可选）发送 HTML 格式的研究摘要到指定邮箱
+5. 记录已处理的论文到 SQLite 数据库
+
+更多选项请查看 `notebooklm-workflow/SKILL.md`
 
 ## 目录结构
 
